@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Egyszer használatos QR kód</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        #qr-result {
+            margin-top: 20px;
+            font-size: 24px;
+        }
+        .valid { color: green; }
+        .invalid { color: red; }
+        .used { color: yellow; }
+    </style>
+</head>
+<body>
+    <h1>Egyszer használatos QR kód generátor és olvasó</h1>
+    
+    <button onclick="generateQRCode()">QR kód generálás</button>
+    <div id="qrcode"></div>
+    
+    <button onclick="startScan()">QR kód olvasás</button>
+    <div id="qr-reader" style="width: 300px; margin: auto;"></div>
+    
+    <div id="qr-result"></div>
+
+    <script>
+        let generatedCode = null;
+        let used = false;
+
+        // QR kód generálás
+        function generateQRCode() {
+            if (used) {
+                document.getElementById('qr-result').innerHTML = '';
+                used = false;
+            }
+            const uniqueCode = Math.random().toString(36).substring(2, 15); // Egyedi kód
+            generatedCode = uniqueCode;
+            document.getElementById('qrcode').innerHTML = '';
+            new QRCode(document.getElementById('qrcode'), uniqueCode);
+        }
+
+        // QR kód olvasás indítása
+        function startScan() {
+            const html5QrCode = new Html5Qrcode("qr-reader");
+            html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10, // frame per second
+                    qrbox: 250 // doboz mérete
+                },
+                qrCodeMessage => {
+                    validateQRCode(qrCodeMessage);
+                    html5QrCode.stop(); // Kamera leállítása olvasás után
+                },
+                errorMessage => {
+                    console.warn(errorMessage);
+                })
+                .catch(err => {
+                    console.error("QR kód olvasási hiba: ", err);
+                });
+        }
+
+        // QR kód ellenőrzése
+        function validateQRCode(scannedCode) {
+            const resultElement = document.getElementById('qr-result');
+            if (used) {
+                resultElement.innerHTML = '<span class="used">MÁR BEOLVASOTT</span>';
+            } else if (scannedCode === generatedCode) {
+                resultElement.innerHTML = '<span class="valid">ÉRVÉNYES</span>';
+                used = true;
+            } else {
+                resultElement.innerHTML = '<span class="invalid">ÉRVÉNYTELEN</span>';
+            }
+        }
+    </script>
+</body>
+</html>
